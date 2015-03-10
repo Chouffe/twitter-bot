@@ -1,0 +1,4 @@
+[{:status "Hello World 1", :type :text, :tweet-at "2015-03-10T16:42:07.766Z", :tweeted? false}
+ {:status "Hello World media", :type :image, :tweet-at "2015-03-10T16:42:07.766Z", :tweeted? false :image "twitter-logo.png"}
+ {:status "Hello World 2", :type :text, :tweet-at "2016-03-10T16:42:07.766Z", :tweeted? false}
+ {:status "Hello World 3", :type :text, :tweet-at "2017-03-10T16:42:07.766Z", :tweeted? false}]

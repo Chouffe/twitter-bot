@@ -1,0 +1,3 @@
+.nrepl*
+*log4j*
+target/
