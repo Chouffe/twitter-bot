@@ -40,6 +40,7 @@
                        (assoc tweet :tweeted? true)))]
     (mapv mark-tweet tweets)))
 
+;; Multimethod that dispatches on the tweet type
 (defmulti tweet :type)
 
 (defmethod tweet :text
@@ -53,6 +54,9 @@
                                      (status-body-part status)]))
 
 (defn- run
+  "Gets the tweets from the file, keeps the one that need to be send, sends
+  them and mark them as tweeted
+  "
   []
   (let [tweets (get-tweets)
         tweets-to-send (->> tweets
@@ -61,19 +65,26 @@
                                                    (time/now))))
         new-tweets (mark-tweets-as-tweeted tweets-to-send tweets)]
 
+    ;; TODO: log insteand
     (println "Tweets: " tweets)
     (println "Tweets to send: " tweets-to-send)
     (println "New tweets: " new-tweets)
 
     (doseq [t tweets-to-send]
+      ;; TODO: log instead
       (println "Tweeting... " t)
       (tweet t))
     (write-tweets-to-file new-tweets)))
 
+(defn repeatedly-schedule-computation
+  "Schedules the computation every `interval-s` seconds in another thread"
+  [interval-s f]
+  (future (Thread/sleep (* interval-s 1000))
+          (f)
+          (repeatedly-schedule-computation interval-s f)))
+
 (defn -main
+  "Main entrypoint of the program"
   []
-  )
-
-;; (-> (get-tweets-edn) (assoc :test :val) write-tweets-edn)
-
-(time-f/parse "2015-03-10T16:42:07.766Z")
+  (let [interval-s (* 10 60)]
+    (repeatedly-schedule-computation interval-s run)))
