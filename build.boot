@@ -1,6 +1,6 @@
 (set-env!
-  :source-paths    #{"src/clj"}
-  :resource-paths  #{"resources"}
+  :source-paths    #{"src/clj/"}
+  :resource-paths  #{"resources/"}
   :dependencies '[[twitter-api "0.7.8"]
                   [clj-time "0.9.0"]])
 

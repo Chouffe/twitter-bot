@@ -1,3 +1,4 @@
 .nrepl*
 *log4j*
 target/
+resources/credentials.edn

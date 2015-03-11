@@ -8,18 +8,16 @@
   (:require [clj-time.core :as time]
             [clj-time.format :as time-f])
   (:import
-    (twitter.callbacks.protocols SyncSingleCallback)))
+    (twitter.callbacks.protocols SyncSingleCallback))
+  (:gen-class))
 
 ;; Twitter credentials
-(def app-consumer-key "ISOy84VQaXeklZhZc8NKpBNe6")
-(def app-consumer-secret "hySm5TAjhnTuM5MHkr3WY4cxBImUzBSUvK6SVa0mmu0lEGBVZc")
-(def user-access-token "1372128799-IpTOpW7QvhJSJxeWCYfkyZrYUHA2zYmjGDP721n")
-(def user-access-token-secret "kcXtN0XDDTvohs4E7sQJtdLdu9iUV2J8KyYCJlKwqgkDI")
+(def creds-map (read-string (slurp "resources/credentials.edn")))
 
-(def my-creds (make-oauth-creds app-consumer-key
-                                app-consumer-secret
-                                user-access-token
-                                user-access-token-secret))
+(def my-creds (make-oauth-creds (get creds-map :app-consumer-key)
+                                (get creds-map :app-consumer-secret)
+                                (get creds-map :user-access-token)
+                                (get creds-map :user-access-token-secret)))
 
 (defn- get-tweets
   "Read tweets from the resource file"
@@ -58,14 +56,24 @@
   them and mark them as tweeted
   "
   []
-  (let [tweets (get-tweets)
-        tweets-to-send (->> tweets
-                            (remove :tweeted?)
-                            (filter #(time/before? (time-f/parse (:tweet-at %))
-                                                   (time/now))))
+  (let [time-zone-france (time/time-zone-for-id "Europe/Paris")
+        time-zone-server (time/time-zone-for-id "America/Los_Angeles")
+        ;; TEST
+        ;; now (time-f/parse "2015-03-11T03:59:07.766Z")
+        time-server-now (time/from-time-zone (time/now) time-zone-server)
+        tweets (get-tweets)
+
+        parse-date-time
+        #(time/from-time-zone (time-f/parse (:tweet-at %)) time-zone-france)
+
+        tweets-to-send
+        (->> tweets
+             (remove :tweeted?)
+             (filter #(time/before? (parse-date-time %) time-server-now)))
         new-tweets (mark-tweets-as-tweeted tweets-to-send tweets)]
 
-    ;; TODO: log insteand
+    ;; TODO: log instead
+    (println "Time Server Now: " time-server-now)
     (println "Tweets: " tweets)
     (println "Tweets to send: " tweets-to-send)
     (println "New tweets: " new-tweets)
@@ -76,7 +84,7 @@
       (tweet t))
     (write-tweets-to-file new-tweets)))
 
-(defn repeatedly-schedule-computation
+(defn- repeatedly-schedule-computation
   "Schedules the computation every `interval-s` seconds in another thread"
   [interval-s f]
   (future (Thread/sleep (* interval-s 1000))
@@ -86,5 +94,6 @@
 (defn -main
   "Main entrypoint of the program"
   []
-  (let [interval-s (* 10 60)]
+  (let [interval-s (* 1 60)]
+    ;; Runs every minute
     (repeatedly-schedule-computation interval-s run)))
